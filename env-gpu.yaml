@@ -1,0 +1,32 @@
+name: cs224n-gpu
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+
+  # Data Processing
+  - numpy=2.1
+  - pandas=2.2
+  - matplotlib=3.9
+  - scipy=1.14
+  - scikit-learn=1.5
+
+  # Pytorch
+  - pytorch=2.5
+  - pytorch-cuda=12.1
+  - torchvision=0.20
+  - tensorboard=2.18
+
+  # NLP
+  - nltk=3.9
+  - sentencepiece=0.2
+  - sacrebleu=2.4
+
+  # Utils
+  - lxml=5.3
+  - docopt=0.6.2
+  - ipykernel
+  - tqdm
