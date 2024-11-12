@@ -19,11 +19,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 import nltk
 import sentencepiece as spm
-nltk.download('punkt')
+
+nltk.download("punkt")
 
 
 def pad_sents(sents, pad_token):
-    """ Pad list of sentences according to the longest sentence in the batch.
+    """Pad list of sentences according to the longest sentence in the batch.
         The paddings should be at the end of each sentence.
     @param sents (list[list[str]]): list of sentences, where each sentence
                                     is represented as a list of words
@@ -36,15 +37,13 @@ def pad_sents(sents, pad_token):
 
     ### YOUR CODE HERE (~6 Lines)
 
-
-
     ### END YOUR CODE
 
     return sents_padded
 
 
 def read_corpus(file_path, source, vocab_size=2500):
-    """ Read file, where each sentence is dilineated by a `\n`.
+    """Read file, where each sentence is dilineated by a `\n`.
     @param file_path (str): path to file containing corpus
     @param source (str): "tgt" or "src" indicating whether text
         is of the source language or target language
@@ -53,21 +52,21 @@ def read_corpus(file_path, source, vocab_size=2500):
     """
     data = []
     sp = spm.SentencePieceProcessor()
-    sp.load('{}.model'.format(source))
+    sp.load("{}.model".format(source))
 
-    with open(file_path, 'r', encoding='utf8') as f:
+    with open(file_path, "r", encoding="utf8") as f:
         for line in f:
             subword_tokens = sp.encode_as_pieces(line)
             # only append <s> and </s> to the target sentence
-            if source == 'tgt':
-                subword_tokens = ['<s>'] + subword_tokens + ['</s>']
+            if source == "tgt":
+                subword_tokens = ["<s>"] + subword_tokens + ["</s>"]
             data.append(subword_tokens)
 
     return data
 
 
 def autograder_read_corpus(file_path, source):
-    """ Read file, where each sentence is dilineated by a `\n`.
+    """Read file, where each sentence is dilineated by a `\n`.
     @param file_path (str): path to file containing corpus
     @param source (str): "tgt" or "src" indicating whether text
         is of the source language or target language
@@ -76,15 +75,15 @@ def autograder_read_corpus(file_path, source):
     for line in open(file_path):
         sent = nltk.word_tokenize(line)
         # only append <s> and </s> to the target sentence
-        if source == 'tgt':
-            sent = ['<s>'] + sent + ['</s>']
+        if source == "tgt":
+            sent = ["<s>"] + sent + ["</s>"]
         data.append(sent)
 
     return data
 
 
 def batch_iter(data, batch_size, shuffle=False):
-    """ Yield batches of source and target sentences reverse sorted by length (largest to smallest).
+    """Yield batches of source and target sentences reverse sorted by length (largest to smallest).
     @param data (list of (src_sent, tgt_sent)): list of tuples containing source and target sentence
     @param batch_size (int): batch size
     @param shuffle (boolean): whether to randomly shuffle the dataset
@@ -96,7 +95,7 @@ def batch_iter(data, batch_size, shuffle=False):
         np.random.shuffle(index_array)
 
     for i in range(batch_num):
-        indices = index_array[i * batch_size: (i + 1) * batch_size]
+        indices = index_array[i * batch_size : (i + 1) * batch_size]
         examples = [data[idx] for idx in indices]
 
         examples = sorted(examples, key=lambda e: len(e[0]), reverse=True)
@@ -104,5 +103,3 @@ def batch_iter(data, batch_size, shuffle=False):
         tgt_sents = [e[1] for e in examples]
 
         yield src_sents, tgt_sents
-
-
