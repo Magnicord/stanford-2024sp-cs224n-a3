@@ -11,7 +11,6 @@ Siyan Li <siyanli@stanford.edu>
 Moussa KB Doumbouya <moussa@stanford.edu>
 """
 
-from typing import List
 import math
 import numpy as np
 import torch

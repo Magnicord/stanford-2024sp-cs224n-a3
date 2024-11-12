@@ -13,7 +13,6 @@ Moussa Doumbouya <moussa@stanford.edu>
 
 from collections import namedtuple
 import sys
-from typing import List, Tuple, Dict, Set, Union
 import torch
 import torch.nn as nn
 import torch.nn.utils
@@ -89,13 +88,13 @@ class NMT(nn.Module):
         ### END YOUR CODE
 
     def forward(
-        self, source: List[List[str]], target: List[List[str]]
+        self, source: list[list[str]], target: list[list[str]]
     ) -> torch.Tensor:
         """Take a mini-batch of source and target sentences, compute the log-likelihood of
         target sentences under the language models learned by the NMT system.
 
-        @param source (List[List[str]]): list of source sentence tokens
-        @param target (List[List[str]]): list of target sentence tokens, wrapped by `<s>` and `</s>`
+        @param source (list[list[str]]): list of source sentence tokens
+        @param target (list[list[str]]): list of target sentence tokens, wrapped by `<s>` and `</s>`
 
         @returns scores (Tensor): a variable/tensor of shape (b, ) representing the
                                     log-likelihood of generating the gold-standard target sentence for
@@ -142,18 +141,18 @@ class NMT(nn.Module):
         return scores
 
     def encode(
-        self, source_padded: torch.Tensor, source_lengths: List[int]
-    ) -> Tuple[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
+        self, source_padded: torch.Tensor, source_lengths: list[int]
+    ) -> tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor]]:
         """Apply the encoder to source sentences to obtain encoder hidden states.
             Additionally, take the final states of the encoder and project them to obtain initial states for decoder.
 
         @param source_padded (Tensor): Tensor of padded source sentences with shape (src_len, b), where
                                         b = batch_size, src_len = maximum source sentence length. Note that
                                        these have already been sorted in order of longest to shortest sentence.
-        @param source_lengths (List[int]): List of actual lengths for each of the source sentences in the batch
+        @param source_lengths (list[int]): list of actual lengths for each of the source sentences in the batch
         @returns enc_hiddens (Tensor): Tensor of hidden units with shape (b, src_len, h*2), where
                                         b = batch size, src_len = maximum source sentence length, h = hidden size.
-        @returns dec_init_state (tuple(Tensor, Tensor)): Tuple of tensors representing the decoder's initial
+        @returns dec_init_state (tuple(Tensor, Tensor)): tuple of tensors representing the decoder's initial
                                                 hidden state and cell.
         """
         enc_hiddens, dec_init_state = None, None
@@ -201,7 +200,7 @@ class NMT(nn.Module):
         self,
         enc_hiddens: torch.Tensor,
         enc_masks: torch.Tensor,
-        dec_init_state: Tuple[torch.Tensor, torch.Tensor],
+        dec_init_state: tuple[torch.Tensor, torch.Tensor],
         target_padded: torch.Tensor,
     ) -> torch.Tensor:
         """Compute combined output vectors for a batch.
@@ -273,16 +272,16 @@ class NMT(nn.Module):
     def step(
         self,
         Ybar_t: torch.Tensor,
-        dec_state: Tuple[torch.Tensor, torch.Tensor],
+        dec_state: tuple[torch.Tensor, torch.Tensor],
         enc_hiddens: torch.Tensor,
         enc_hiddens_proj: torch.Tensor,
         enc_masks: torch.Tensor,
-    ) -> Tuple[Tuple, torch.Tensor, torch.Tensor]:
+    ) -> tuple[tuple, torch.Tensor, torch.Tensor]:
         """Compute one forward step of the LSTM decoder, including the attention computation.
 
         @param Ybar_t (Tensor): Concatenated Tensor of [Y_t o_prev], with shape (b, e + h). The input for the decoder,
                                 where b = batch size, e = embedding size, h = hidden size.
-        @param dec_state (tuple(Tensor, Tensor)): Tuple of tensors both with shape (b, h), where b = batch size, h = hidden size.
+        @param dec_state (tuple(Tensor, Tensor)): tuple of tensors both with shape (b, h), where b = batch size, h = hidden size.
                 First tensor is decoder's prev hidden state, second tensor is decoder's prev cell.
         @param enc_hiddens (Tensor): Encoder hidden states Tensor, with shape (b, src_len, h * 2), where b = batch size,
                                     src_len = maximum source length, h = hidden size.
@@ -291,7 +290,7 @@ class NMT(nn.Module):
         @param enc_masks (Tensor): Tensor of sentence masks shape (b, src_len),
                                     where b = batch size, src_len is maximum source length.
 
-        @returns dec_state (tuple (Tensor, Tensor)): Tuple of tensors both shape (b, h), where b = batch size, h = hidden size.
+        @returns dec_state (tuple (Tensor, Tensor)): tuple of tensors both shape (b, h), where b = batch size, h = hidden size.
                 First tensor is decoder's new hidden state, second tensor is decoder's new cell.
         @returns combined_output (Tensor): Combined output Tensor at timestep t, shape (b, h), where b = batch size, h = hidden size.
         @returns e_t (Tensor): Tensor of shape (b, src_len). It is attention scores distribution.
@@ -327,7 +326,7 @@ class NMT(nn.Module):
 
         ### END YOUR CODE
 
-        # Set e_t to -inf where enc_masks has 1
+        # set e_t to -inf where enc_masks has 1
         if enc_masks is not None:
             e_t.data.masked_fill_(enc_masks.bool(), -float("inf"))
 
@@ -364,13 +363,13 @@ class NMT(nn.Module):
         return dec_state, combined_output, e_t
 
     def generate_sent_masks(
-        self, enc_hiddens: torch.Tensor, source_lengths: List[int]
+        self, enc_hiddens: torch.Tensor, source_lengths: list[int]
     ) -> torch.Tensor:
         """Generate sentence masks for encoder hidden states.
 
         @param enc_hiddens (Tensor): encodings of shape (b, src_len, 2*h), where b = batch size,
                                      src_len = max source length, h = hidden size.
-        @param source_lengths (List[int]): List of actual lengths for each of the sentences in the batch.
+        @param source_lengths (list[int]): list of actual lengths for each of the sentences in the batch.
 
         @returns enc_masks (Tensor): Tensor of sentence masks of shape (b, src_len),
                                     where src_len = max source length, h = hidden size.
@@ -384,16 +383,16 @@ class NMT(nn.Module):
 
     def beam_search(
         self,
-        src_sent: List[str],
+        src_sent: list[str],
         beam_size: int = 5,
         max_decoding_time_step: int = 70,
-    ) -> List[Hypothesis]:
+    ) -> list[Hypothesis]:
         """Given a single source sentence, perform beam search, yielding translations in the target language.
-        @param src_sent (List[str]): a single source sentence (words)
+        @param src_sent (list[str]): a single source sentence (words)
         @param beam_size (int): beam size
         @param max_decoding_time_step (int): maximum number of time steps to unroll the decoding RNN
-        @returns hypotheses (List[Hypothesis]): a list of hypothesis, each hypothesis has two fields:
-                value: List[str]: the decoded target sentence, represented as a list of words
+        @returns hypotheses (list[Hypothesis]): a list of hypothesis, each hypothesis has two fields:
+                value: list[str]: the decoded target sentence, represented as a list of words
                 score: float: the log-likelihood of the target sentence
         """
         src_sents_var = self.vocab.src.to_input_tensor([src_sent], self.device)

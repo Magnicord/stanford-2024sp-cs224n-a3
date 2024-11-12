@@ -25,7 +25,6 @@ from docopt import docopt
 from itertools import chain
 import json
 import torch
-from typing import List
 from utils import read_corpus, pad_sents
 import sentencepiece as spm
 
@@ -119,12 +118,12 @@ class VocabEntry(object):
         return [self.id2word[w_id] for w_id in word_ids]
 
     def to_input_tensor(
-        self, sents: List[List[str]], device: torch.device
+        self, sents: list[list[str]], device: torch.device
     ) -> torch.Tensor:
         """Convert list of sentences (words) into tensor with necessary padding for
         shorter sentences.
 
-        @param sents (List[List[str]]): list of sentences (words)
+        @param sents (list[list[str]]): list of sentences (words)
         @param device: device on which to load the tesnor, i.e. CPU or GPU
 
         @returns sents_var: tensor of (max_sentence_length, batch_size)

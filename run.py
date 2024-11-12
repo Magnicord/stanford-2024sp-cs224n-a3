@@ -57,7 +57,6 @@ from beam_search_diagnostics import format_example_sentence
 import sacrebleu
 from nmt_model import Hypothesis, NMT
 import numpy as np
-from typing import List, Tuple, Dict, Set, Union
 from tqdm import tqdm
 from utils import read_corpus, batch_iter
 from vocab import Vocab, VocabEntry
@@ -100,11 +99,11 @@ def evaluate_ppl(model, dev_data, batch_size=32):
 
 
 def compute_corpus_level_bleu_score(
-    references: List[List[str]], hypotheses: List[Hypothesis]
+    references: list[list[str]], hypotheses: list[Hypothesis]
 ) -> float:
     """Given decoding results and reference sentences, compute corpus-level BLEU score.
-    @param references (List[List[str]]): a list of gold-standard reference target sentences
-    @param hypotheses (List[Hypothesis]): a list of hypotheses, one for each reference
+    @param references (list[list[str]]): a list of gold-standard reference target sentences
+    @param hypotheses (list[Hypothesis]): a list of hypotheses, one for each reference
     @returns bleu_score: corpus-level BLEU score
     """
     # remove the start and end tokens
@@ -125,9 +124,9 @@ def compute_corpus_level_bleu_score(
     return bleu.score
 
 
-def train(args: Dict):
+def train(args: dict):
     """Train the NMT Model.
-    @param args (Dict): args from cmd line
+    @param args (dict): args from cmd line
     """
     train_data_src = read_corpus(
         args["--train-src"], source="src", vocab_size=21000
@@ -385,11 +384,11 @@ def train(args: Dict):
                     exit(0)
 
 
-def decode(args: Dict[str, str]):
+def decode(args: dict[str, str]):
     """Performs decoding on a test set, and save the best-scoring decoding results.
     If the target gold-standard sentences are given, the function also computes
     corpus-level BLEU score.
-    @param args (Dict): args from cmd line
+    @param args (dict): args from cmd line
     """
 
     print(
@@ -442,16 +441,16 @@ def decode(args: Dict[str, str]):
 
 def beam_search(
     model: NMT,
-    test_data_src: List[List[str]],
+    test_data_src: list[list[str]],
     beam_size: int,
     max_decoding_time_step: int,
-) -> List[List[Hypothesis]]:
+) -> list[list[Hypothesis]]:
     """Run beam search to construct hypotheses for a list of src-language sentences.
     @param model (NMT): NMT Model
-    @param test_data_src (List[List[str]]): List of sentences (words) in source language, from test set.
+    @param test_data_src (list[list[str]]): list of sentences (words) in source language, from test set.
     @param beam_size (int): beam_size (# of hypotheses to hold for a translation at every step)
     @param max_decoding_time_step (int): maximum sentence length that Beam search can produce
-    @returns hypotheses (List[List[Hypothesis]]): List of Hypothesis translations for every source sentence.
+    @returns hypotheses (list[list[Hypothesis]]): list of Hypothesis translations for every source sentence.
     """
     was_training = model.training
     model.eval()
