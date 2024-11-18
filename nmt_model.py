@@ -242,6 +242,33 @@ class NMT(nn.Module):
         ###     Tensor Permute:
         ###         https://pytorch.org/docs/stable/generated/torch.permute.html
 
+        # Construct Tensor `X` of source sentences with shape (src_len, b, e)
+        X: torch.Tensor = self.model_embeddings.source(source_padded)
+        # Permute the shape of X to (b, e, src_len)
+        X = X.permute(1, 2, 0)
+        # Apply the post_embed_cnn layer
+        X = self.post_embed_cnn(X)
+        # Permute the shape of X back to its original shape (src_len, b, e)
+        X = X.permute(2, 0, 1)
+        # Pack the padded sequence X before passing to the encoder
+        X_packed = pack_padded_sequence(
+            X, source_lengths, batch_first=False, enforce_sorted=True
+        )
+        # Compute `enc_hiddens`, `last_hidden`, `last_cell` by applying the encoder to `X`
+        enc_hiddens, (last_hidden, last_cell) = self.encoder(X_packed)
+        # Pad the packed `enc_hiddens` sequence
+        enc_hiddens, _ = pad_packed_sequence(
+            enc_hiddens, batch_first=False, total_length=X.size(0)
+        )  # (src_len, b, h*2)
+        # Permute the shape of `enc_hiddens` to (b, src_len, h*2)
+        enc_hiddens = enc_hiddens.permute(1, 0, 2)
+        # Concatenate the forwards and backwards tensors to obtain a tensor shape (b, 2*h)
+        last_hidden_concat = torch.cat((last_hidden[0], last_hidden[1]), dim=1)
+        last_cell_concat = torch.cat((last_cell[0], last_cell[1]), dim=1)
+        # Compute init_decoder_hidden and init_decoder_cell
+        init_decoder_hidden = self.h_projection(last_hidden_concat)
+        init_decoder_cell = self.c_projection(last_cell_concat)
+        dec_init_state = (init_decoder_hidden, init_decoder_cell)
         ### END YOUR CODE
 
         return enc_hiddens, dec_init_state
