@@ -105,7 +105,7 @@ class NMT(nn.Module):
             bias=True,
         )
         self.decoder = nn.LSTMCell(
-            input_size=hidden_size,
+            input_size=embed_size + hidden_size,
             hidden_size=hidden_size,
             bias=True,
         )
@@ -425,6 +425,16 @@ class NMT(nn.Module):
         ###     Tensor Squeeze:
         ###         https://pytorch.org/docs/stable/generated/torch.squeeze.html
 
+        # Apply the decoder
+        dec_state: tuple[torch.Tensor, torch.Tensor] = self.decoder(
+            Ybar_t, dec_state
+        )
+        dec_hidden, _ = dec_state  # (b, h)
+        # Compute the attention scores e_t of shape (b, src_len)
+        e_t = torch.bmm(
+            enc_hiddens_proj,  # (b, src_len, h)
+            dec_hidden.unsqueeze(-1),  # (b, h, 1)
+        ).squeeze(-1)
         ### END YOUR CODE
 
         # set e_t to -inf where enc_masks has 1
@@ -458,6 +468,16 @@ class NMT(nn.Module):
         ###     Tanh:
         ###         https://pytorch.org/docs/stable/generated/torch.tanh.html
 
+        # Compute alpha_t by apply softmax to e_t of shape (b, src_len)
+        alpha_t = F.softmax(e_t, dim=1)  # (b, src_len)
+        # Compute the attention output vector a_t of shape (b, 2h)
+        a_t = torch.bmm(
+            alpha_t.unsqueeze(1),  # (b, 1, src_len)
+            enc_hiddens,  # (b, src_len, 2h)
+        ).squeeze(1)
+        U_t = torch.cat((a_t, dec_hidden), dim=1)  # (b, 3h)
+        V_t = self.combined_output_projection(U_t)  # (b, h)
+        O_t = self.dropout(torch.tanh(V_t))  # (b, h)
         ### END YOUR CODE
 
         combined_output = O_t
